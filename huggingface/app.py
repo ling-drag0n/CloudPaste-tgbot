@@ -3,13 +3,14 @@ import json
 import asyncio
 import time
 
-from fastapi import FastAPI, Request
-from fastapi.responses import Response, StreamingResponse, FileResponse
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import Response, StreamingResponse, FileResponse, JSONResponse
 import httpx
 
 #  Bot API Server监听端口
 UPSTREAM = f"http://127.0.0.1:{os.environ.get('TELEGRAM_UPSTREAM_PORT', '8081')}"
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app = Starlette(debug=False)
 
 WORK_DIR = os.environ.get("TELEGRAM_WORK_DIR", "/tmp/telegram-bot-api-data")
 DOWNLOAD_WAIT_SECONDS = float(os.environ.get("TELEGRAM_DOWNLOAD_WAIT_SECONDS", "8"))
@@ -99,11 +100,11 @@ def _try_file_response(candidates: list[str]):
             pass
     return None
 
-@app.get("/")
-async def root():
-    return {"ok": True}
+async def root(request: Request):
+    return JSONResponse({"ok": True})
 
-async def proxy(path: str, request: Request):
+async def proxy(request: Request):
+    path = request.path_params.get("path", "")
     # 兜底：如果下游请求把 file_path 带成了“工作目录前缀”，这里直接改写成相对路径再转发给 telegram-bot-api
     path_for_upstream = path.lstrip("/")
     if path_for_upstream.startswith("file/"):
@@ -268,7 +269,8 @@ async def proxy(path: str, request: Request):
 
 _PROXY_PREFIX = _normalize_proxy_prefix(os.environ.get("TELEGRAM_PROXY_PREFIX", "/tg"))
 _PROXY_ROUTE = f"{_PROXY_PREFIX}/{{path:path}}" if _PROXY_PREFIX else "/{path:path}"
-app.add_api_route(
+app.add_route("/", root, methods=["GET"])
+app.add_route(
     _PROXY_ROUTE,
     proxy,
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],

@@ -2,7 +2,8 @@ version: "3.8"
 
 services:
   cloudpaste-tg-botapi:
-    image: cloudpaste-tg-botapi:latest
+    # ghcr.io/ling-drag0n/cloudpaste-tg-botapi:latest
+    image: dragon730/cloudpaste-tg-botapi:latest
     container_name: cloudpaste-tg-botapi
     restart: unless-stopped
     ports:
