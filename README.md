@@ -1,33 +1,22 @@
----
-title: TG BotAPI Proxy
-emoji: 🐢
-colorFrom: purple
-colorTo: red
-sdk: docker
-pinned: false
-app_port: 7860
----
-
 这是一个很薄的 Telegram Bot API 代理：
 - 容器内启动 `telegram-bot-api --local`（突破官方 Bot API 下载大小限制）
 - 对外提供一个 HTTP 入口（默认前缀 `/tg`），供 CloudPaste 之类的项目调用
 
 ## Docker Compose
 
-1) 复制环境变量文件
+1) 先编辑 `docker-compose.yml`
 
-- 把 `.env.example` 复制成 `.env`
-- 填上 3 个必填项：
-  - `TELEGRAM_API_ID`
-  - `TELEGRAM_API_HASH`
-  - `BOT_TOKEN`
+找到 `environment:`，把 3 个必填项填上：
+- `TELEGRAM_API_ID`
+- `TELEGRAM_API_HASH`
+- `BOT_TOKEN`
 
 2) 启动
 
 在本目录执行：
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 3) 验证
@@ -54,7 +43,7 @@ docker compose up -d --build
 
 这个目录就是 `telegram-bot-api` 的工作目录（缓存文件会在这里），所以：
 
-- 开持久化：容器重启不会丢缓存，预览/下载更稳，不容易 404
+- 开持久化：容器重启不会丢缓存，预览/下载更稳
 
 ## CloudPaste
 
@@ -64,4 +53,3 @@ docker compose up -d --build
 - `api_base_url`：
   - 如果 `TELEGRAM_PROXY_PREFIX=/tg`（默认）：填 `http://<你的机器>:7860/tg`
   - 如果 `TELEGRAM_PROXY_PREFIX=/`（无前缀）：填 `http://<你的机器>:7860`
-

@@ -1,53 +1,67 @@
 name: Publish Docker image (GHCR)
 
 on:
-  push:
-    branches: ["main"]
-    tags: ["v*"]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "自定义版本标签(不包含v前缀)，留空则使用 dev-<短SHA>"
+        required: false
+        default: ""
 
 permissions:
   contents: read
   packages: write
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set-version.outputs.version }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 设置版本
+        id: set-version
+        run: |
+          if [[ "${{ github.event.inputs.version }}" != "" ]]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "version=dev-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
   build-and-push:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
+      - name: 设置QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
+      - name: 设置Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
+      - name: 登录到 GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/cloudpaste-tg-botapi
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=tag
-            type=sha
-
-      - name: Build and push
+      - name: 构建并推送（GHCR）
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./huggingface
+          file: ./huggingface/Dockerfile
           push: true
           platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/cloudpaste-tg-botapi:latest
+            ghcr.io/${{ github.repository_owner }}/cloudpaste-tg-botapi:${{ needs.setup.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

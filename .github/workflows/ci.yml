@@ -1,0 +1,39 @@
+name: CI (sanity)
+
+on:
+  pull_request: {}
+
+permissions:
+  contents: read
+
+jobs:
+  python-sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Syntax check (py_compile)
+        run: python -m py_compile huggingface/app.py
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./huggingface
+          file: ./huggingface/Dockerfile
+          push: false
+          platforms: linux/amd64

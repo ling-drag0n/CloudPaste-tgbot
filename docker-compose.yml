@@ -1,38 +1,39 @@
 version: "3.8"
 
 services:
-  tg-botapi-proxy:
-    # 同时启动 telegram-bot-api(--local) + 代理(FastAPI)
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: tg-botapi-proxy
+  cloudpaste-tg-botapi:
+    image: cloudpaste-tg-botapi:latest
+    container_name: cloudpaste-tg-botapi
     restart: unless-stopped
-    env_file:
-      - .env
     ports:
-      - "${PORT:-7860}:7860"
+      - "7860:7860"
     volumes:
-      # 持久化目录：容器重启后文件缓存不丢，避免 404
+      # 持久化目录
       - tg_bot_api_data:/var/lib/telegram-bot-api
     environment:
-      # - start.sh 会用 TELEGRAM_WORK_DIR 作为 telegram-bot-api 的 --dir
+      # - huggingface/start.sh 会用 TELEGRAM_WORK_DIR 作为 telegram-bot-api 的 --dir
       # - BOT_TOKEN 在代理层的 URL 里会用到（/tg/bot<TOKEN>/...）
-      TELEGRAM_WORK_DIR: "${TELEGRAM_WORK_DIR:-/var/lib/telegram-bot-api}"
-      TELEGRAM_TEMP_DIR: "${TELEGRAM_TEMP_DIR:-/tmp/telegram-bot-api-tmp}"
 
-      TELEGRAM_API_ID: "${TELEGRAM_API_ID}"
-      TELEGRAM_API_HASH: "${TELEGRAM_API_HASH}"
+      # === 必填（不填会启动失败）===
+      # 从 https://my.telegram.org/apps 获取
+      TELEGRAM_API_ID: ""
+      TELEGRAM_API_HASH: ""
+      # 从 BotFather 获取
+      BOT_TOKEN: ""
 
-      PORT: "${PORT:-7860}"
-      TELEGRAM_PROXY_PREFIX: "${TELEGRAM_PROXY_PREFIX:-/tg}"
-      TELEGRAM_UPSTREAM_PORT: "${TELEGRAM_UPSTREAM_PORT:-8081}"
+      # === 常用（一般不用改）===
+      PORT: "7860"
+      TELEGRAM_PROXY_PREFIX: "/tg" # 填 "/" 表示不加前缀
+      TELEGRAM_UPSTREAM_PORT: "8081" # telegram-bot-api 在容器内部监听端口
 
-      BOT_TOKEN: "${BOT_TOKEN}"
+      # === 目录（建议保持默认）===
+      TELEGRAM_WORK_DIR: "/var/lib/telegram-bot-api" # 工作目录（缓存/落盘），已做 volume 持久化
+      TELEGRAM_TEMP_DIR: "/tmp/telegram-bot-api-tmp" # 临时目录（可不持久化）
 
-      TELEGRAM_VERBOSITY: "${TELEGRAM_VERBOSITY:-1}"
-      TELEGRAM_DOWNLOAD_WAIT_SECONDS: "${TELEGRAM_DOWNLOAD_WAIT_SECONDS:-8}"
-      TELEGRAM_DOWNLOAD_POLL_INTERVAL_MS: "${TELEGRAM_DOWNLOAD_POLL_INTERVAL_MS:-200}"
+      # === 调试/性能（可选）===
+      TELEGRAM_VERBOSITY: "1" # 1~5，越大越多
+      TELEGRAM_DOWNLOAD_WAIT_SECONDS: "8" # HF/网络慢时可以调大
+      TELEGRAM_DOWNLOAD_POLL_INTERVAL_MS: "200"
 
 volumes:
   tg_bot_api_data:
