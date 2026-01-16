@@ -25,6 +25,19 @@ docker compose up -d
 - 默认前缀 `/tg`：例如（注意替换成你的 token）：
   - `http://localhost:7860/tg/bot<TOKEN>/getMe`
 
+## 端口配置
+
+容器内默认监听 **7860**
+
+**本地部署改端口：**
+
+只需修改 `docker-compose.yml` 的 `ports` 映射：
+
+```yaml
+ports:
+  - "7860:7860"  # 本地访问 http://localhost:7860
+```
+
 ## /tg 前缀怎么改？
 
 用环境变量 `TELEGRAM_PROXY_PREFIX`：

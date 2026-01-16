@@ -7,33 +7,35 @@ services:
     container_name: cloudpaste-tg-botapi
     restart: unless-stopped
     ports:
+      # 端口映射：宿主机端口:容器端口
       - "7860:7860"
     volumes:
-      # 持久化目录
+      # 持久化 telegram-bot-api 工作目录（缓存文件）
       - tg_bot_api_data:/var/lib/telegram-bot-api
     environment:
-      # - huggingface/start.sh 会用 TELEGRAM_WORK_DIR 作为 telegram-bot-api 的 --dir
-      # - BOT_TOKEN 在代理层的 URL 里会用到（/tg/bot<TOKEN>/...）
-
-      # === 必填（不填会启动失败）===
+      # === 必填配置 ===
       # 从 https://my.telegram.org/apps 获取
       TELEGRAM_API_ID: ""
       TELEGRAM_API_HASH: ""
-      # 从 BotFather 获取
+      # 从 BotFather 获取，代理层 URL 会用到 /tg/bot<TOKEN>/...
       BOT_TOKEN: ""
 
-      # === 常用（一般不用改）===
-      PORT: "7860"
-      TELEGRAM_PROXY_PREFIX: "/tg" # 填 "/" 表示不加前缀
-      TELEGRAM_UPSTREAM_PORT: "8081" # telegram-bot-api 在容器内部监听端口
+      # === 代理配置 ===
+      # URL 前缀，默认 /tg，填 "/" 表示无前缀
+      TELEGRAM_PROXY_PREFIX: "/tg"
 
-      # === 目录（建议保持默认）===
-      TELEGRAM_WORK_DIR: "/var/lib/telegram-bot-api" # 工作目录（缓存/落盘），已做 volume 持久化
-      TELEGRAM_TEMP_DIR: "/tmp/telegram-bot-api-tmp" # 临时目录（可不持久化）
+      # === 目录配置 ===
+      # 工作目录（缓存/落盘）
+      TELEGRAM_WORK_DIR: "/var/lib/telegram-bot-api"
+      # 临时目录（可不持久化）
+      TELEGRAM_TEMP_DIR: "/tmp/telegram-bot-api-tmp"
 
-      # === 调试/性能（可选）===
-      TELEGRAM_VERBOSITY: "1" # 1~5，越大越多
-      TELEGRAM_DOWNLOAD_WAIT_SECONDS: "8" # HF/网络慢时可以调大
+      # === 性能配置 ===
+      # 日志级别：1~5，越大越详细
+      TELEGRAM_VERBOSITY: "1"
+      # 文件下载等待时间（秒），网络慢时可调大
+      TELEGRAM_DOWNLOAD_WAIT_SECONDS: "8"
+      # 下载轮询间隔（毫秒）
       TELEGRAM_DOWNLOAD_POLL_INTERVAL_MS: "200"
 
 volumes:

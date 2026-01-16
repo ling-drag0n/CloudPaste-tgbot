@@ -8,10 +8,12 @@ from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse, FileResponse, JSONResponse
 import httpx
 
-#  Bot API Server监听端口
-UPSTREAM = f"http://127.0.0.1:{os.environ.get('TELEGRAM_UPSTREAM_PORT', '8081')}"
+# telegram-bot-api 上游地址
+# 容器内 telegram-bot-api 监听 127.0.0.1:8081，代理层转发请求到这里
+UPSTREAM = f"http://127.0.0.1:{os.environ.get('TELEGRAM_API_PORT', '8081')}"
 app = Starlette(debug=False)
 
+# 文件下载配置
 WORK_DIR = os.environ.get("TELEGRAM_WORK_DIR", "/tmp/telegram-bot-api-data")
 DOWNLOAD_WAIT_SECONDS = float(os.environ.get("TELEGRAM_DOWNLOAD_WAIT_SECONDS", "8"))
 DOWNLOAD_POLL_INTERVAL_MS = int(os.environ.get("TELEGRAM_DOWNLOAD_POLL_INTERVAL_MS", "200"))
